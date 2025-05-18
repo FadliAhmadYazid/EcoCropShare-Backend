@@ -17,7 +17,7 @@ const sliderImages = [
 const DashboardPage = () => {
   const { data: session, status } = useSession();
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   const [userPosts, setUserPosts] = useState([]);
   const [activePosts, setActivePosts] = useState([]);
   const [userRequests, setUserRequests] = useState([]);
@@ -25,31 +25,52 @@ const DashboardPage = () => {
   const [userArticles, setUserArticles] = useState([]);
   const [userHistory, setUserHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   useEffect(() => {
     // Fetch dashboard data
     const fetchDashboardData = async () => {
       if (status === 'authenticated') {
         try {
           setIsLoading(true);
-          
-          // Here we would make actual API calls to our backend
-          // For now, we'll simulate empty data
-          setUserPosts([]);
-          setActivePosts([]);
-          setUserRequests([]);
-          setActiveRequests([]);
-          setUserArticles([]);
-          setUserHistory([]);
-          
+
+          // Mengambil posting pengguna
+          const postsResponse = await fetch(`/api/posts?userId=${session.user.id}`);
+          const postsData = await postsResponse.json();
+          setUserPosts(postsData.posts || []);
+
+          // Mengambil posting aktif
+          const activePostsResponse = await fetch('/api/posts?status=available');
+          const activePostsData = await activePostsResponse.json();
+          setActivePosts(activePostsData.posts || []);
+
+          // Mengambil permintaan pengguna
+          const requestsResponse = await fetch(`/api/requests?userId=${session.user.id}`);
+          const requestsData = await requestsResponse.json();
+          setUserRequests(requestsData.requests || []);
+
+          // Mengambil permintaan aktif
+          const activeRequestsResponse = await fetch('/api/requests?status=open');
+          const activeRequestsData = await activeRequestsResponse.json();
+          setActiveRequests(activeRequestsData.requests || []);
+
+          // Mengambil artikel pengguna (jika API sudah tersedia)
+          const articlesResponse = await fetch(`/api/articles?userId=${session.user.id}`);
+          const articlesData = await articlesResponse.json();
+          setUserArticles(articlesData.articles || []);
+
+          // Mengambil riwayat pertukaran
+          const historyResponse = await fetch(`/api/history?userId=${session.user.id}`);
+          const historyData = await historyResponse.json();
+          setUserHistory(historyData.history || []);
+
         } catch (error) {
           console.error('Error fetching dashboard data:', error);
         } finally {
@@ -57,10 +78,10 @@ const DashboardPage = () => {
         }
       }
     };
-    
+
     fetchDashboardData();
-  }, [status]);
-  
+  }, [status, session]);
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -71,36 +92,35 @@ const DashboardPage = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Banner Slider */}
       <div className="relative rounded-lg overflow-hidden mb-8 h-48 md:h-64">
-        <Image 
-          src={sliderImages[currentSlide]} 
+        <Image
+          src={sliderImages[currentSlide]}
           alt="Welcome banner"
           fill
           style={{ objectFit: 'cover' }}
           priority
         />
-        
+
         <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
           {sliderImages.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full ${
-                index === currentSlide ? 'bg-white' : 'bg-white/50'
-              }`}
+              className={`w-3 h-3 rounded-full ${index === currentSlide ? 'bg-white' : 'bg-white/50'
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
       </div>
-      
+
       <h2 className="text-2xl font-bold mb-2">Selamat datang, {session?.user?.name}!</h2>
       <p className="text-gray-600 mb-6">EcoCropShare membantu Anda berbagi dan mendapatkan bibit atau hasil panen dengan mudah.</p>
-      
+
       <div className="flex flex-wrap gap-4 mb-8">
         <Link href="/posts/create">
           <Button>Tambah Post Baru</Button>
@@ -109,7 +129,7 @@ const DashboardPage = () => {
           <Button variant="outline">Buat Permintaan</Button>
         </Link>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -118,21 +138,21 @@ const DashboardPage = () => {
           <p className="text-gray-600 mb-4">Bibit & hasil panen yang Anda bagikan</p>
           <Link href="/posts" className="text-primary hover:text-primary-dark">Lihat semua</Link>
         </Card>
-        
+
         <Card>
           <h3 className="font-semibold text-lg mb-1">Permintaan Saya</h3>
           <p className="text-2xl font-bold text-primary">{userRequests.length}</p>
           <p className="text-gray-600 mb-4">Tanaman yang Anda cari</p>
           <Link href="/requests" className="text-primary hover:text-primary-dark">Lihat semua</Link>
         </Card>
-        
+
         <Card>
           <h3 className="font-semibold text-lg mb-1">Artikel Saya</h3>
           <p className="text-2xl font-bold text-primary">{userArticles.length}</p>
           <p className="text-gray-600 mb-4">Artikel yang Anda bagikan</p>
           <Link href="/articles" className="text-primary hover:text-primary-dark">Lihat semua</Link>
         </Card>
-        
+
         <Card>
           <h3 className="font-semibold text-lg mb-1">Riwayat Tukar</h3>
           <p className="text-2xl font-bold text-primary">{userHistory.length}</p>
@@ -140,7 +160,7 @@ const DashboardPage = () => {
           <Link href="/history" className="text-primary hover:text-primary-dark">Lihat semua</Link>
         </Card>
       </div>
-      
+
       {/* Latest Posts & Requests */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div>
@@ -148,7 +168,7 @@ const DashboardPage = () => {
             <h3 className="text-xl font-bold">Posting Terbaru</h3>
             <Link href="/posts" className="text-primary hover:text-primary-dark">Lihat semua</Link>
           </div>
-          
+
           {activePosts.length > 0 ? (
             <div className="space-y-4">
               {activePosts.slice(0, 3).map((post: any) => (
@@ -192,13 +212,13 @@ const DashboardPage = () => {
             </Card>
           )}
         </div>
-        
+
         <div>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold">Permintaan Terbaru</h3>
             <Link href="/requests" className="text-primary hover:text-primary-dark">Lihat semua</Link>
           </div>
-          
+
           {activeRequests.length > 0 ? (
             <div className="space-y-4">
               {activeRequests.slice(0, 3).map((request: any) => (
@@ -234,7 +254,7 @@ const DashboardPage = () => {
           )}
         </div>
       </div>
-      
+
       {/* Quick Actions */}
       <h3 className="text-xl font-bold mb-4">Aksi Cepat</h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -245,7 +265,7 @@ const DashboardPage = () => {
             <p className="text-gray-600 text-sm">Bagikan bibit atau hasil panen</p>
           </Card>
         </Link>
-        
+
         <Link href="/requests/create">
           <Card className="p-4 text-center h-full hover:shadow-md transition-shadow">
             <div className="bg-blue-100 text-blue-800 w-12 h-12 rounded-full flex items-center justify-center text-xl mx-auto mb-3">?</div>
@@ -253,7 +273,7 @@ const DashboardPage = () => {
             <p className="text-gray-600 text-sm">Cari bibit atau hasil panen</p>
           </Card>
         </Link>
-        
+
         <Link href="/articles/create">
           <Card className="p-4 text-center h-full hover:shadow-md transition-shadow">
             <div className="bg-yellow-100 text-yellow-800 w-12 h-12 rounded-full flex items-center justify-center text-xl mx-auto mb-3">📝</div>
@@ -261,7 +281,7 @@ const DashboardPage = () => {
             <p className="text-gray-600 text-sm">Bagikan pengetahuan</p>
           </Card>
         </Link>
-        
+
         <Link href="/profile">
           <Card className="p-4 text-center h-full hover:shadow-md transition-shadow">
             <div className="bg-purple-100 text-purple-800 w-12 h-12 rounded-full flex items-center justify-center text-xl mx-auto mb-3">👤</div>
@@ -270,7 +290,7 @@ const DashboardPage = () => {
           </Card>
         </Link>
       </div>
-      
+
       {/* Community Tips Section */}
       <div className="bg-green-50 rounded-lg p-6 flex flex-col md:flex-row justify-between items-center">
         <div className="mb-4 md:mb-0">

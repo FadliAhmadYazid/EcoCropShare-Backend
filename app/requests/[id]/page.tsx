@@ -38,25 +38,25 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
-// Add this before the return statement
-const filteredUsers = users
-  .filter(user => user.id !== session?.user.id) // Exclude the current user
-  .filter(user => 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Add this before the return statement
+  const filteredUsers = users
+    .filter(user => user.id !== session?.user.id) // Exclude the current user
+    .filter(user =>
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-// Also add a click handler to close the dropdown when clicking outside
-useEffect(() => {
-  const handleClickOutside = () => {
-    setShowDropdown(false);
-  };
-  
-  document.addEventListener('click', handleClickOutside);
-  return () => {
-    document.removeEventListener('click', handleClickOutside);
-  };
-}, []);
+  // Also add a click handler to close the dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowDropdown(false);
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   // First useEffect - Load request details
   useEffect(() => {
@@ -330,8 +330,8 @@ useEffect(() => {
                 <div className="flex justify-between items-start mb-4">
                   <h1 className="text-2xl font-bold">{request.plantName}</h1>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${request.status === 'open'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
                     }`}>
                     {request.status === 'open' ? 'Aktif' : 'Terpenuhi'}
                   </span>
@@ -516,24 +516,24 @@ useEffect(() => {
               </div>
             )}
 
-
             {/* Bagian Tawarkan Bantuan (hanya untuk non-pemilik) */}
             {!isAuthor && request.status === 'open' && (
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h3 className="text-lg font-medium mb-4">Bisa Membantu?</h3>
                 <p className="text-gray-700 mb-4">
-                  Jika Anda memiliki tanaman yang diminta, silakan kirim komentar untuk menghubungi peminta.
+                  Jika Anda memiliki tanaman yang diminta, silakan hubungi langsung peminta.
                 </p>
                 <Button
                   isFullWidth
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea');
-                    if (textarea) {
-                      textarea.focus();
-                    }
-                  }}
+                  onClick={() => router.push(`/messages?userId=${typeof request.userId === 'object'
+                      ? (request.userId as any)._id || (request.userId as any).id
+                      : request.userId
+                    }`)}
                 >
-                  Tawarkan Bantuan
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                  </svg>
+                  Kirim Pesan
                 </Button>
               </div>
             )}

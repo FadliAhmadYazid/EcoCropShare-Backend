@@ -8,7 +8,7 @@ import Footer from '@/components/common/Footer';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import { HistoryType } from '@/types';
-import { formatDate, getRelativeTime } from '@/lib/utils';
+import { formatDate, getRelativeTime, compareIds } from '@/lib/utils';
 
 const HistoryPage = () => {
   const { data: session, status } = useSession();
@@ -107,14 +107,14 @@ const HistoryPage = () => {
             <div className="bg-green-50 px-4 py-2 rounded-lg">
               <span className="text-sm text-gray-600">Dibagikan</span>
               <span className="block text-xl font-bold text-green-700">
-                {historyItems.filter(h => h.userId === session?.user?.id).length}
+                {historyItems.filter(h => compareIds(h.userId, session?.user?.id)).length}
               </span>
             </div>
 
             <div className="bg-blue-50 px-4 py-2 rounded-lg">
               <span className="text-sm text-gray-600">Diterima</span>
               <span className="block text-xl font-bold text-blue-700">
-                {historyItems.filter(h => h.partnerId === session?.user?.id).length}
+                {historyItems.filter(h => compareIds(h.partnerId, session?.user?.id)).length}
               </span>
             </div>
 
@@ -137,8 +137,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterType('all')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterType === 'all'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Semua
@@ -146,8 +146,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterType('post')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterType === 'post'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Dari Posting
@@ -155,8 +155,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterType('request')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterType === 'request'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Dari Permintaan
@@ -171,8 +171,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterRole('all')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterRole === 'all'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Semua
@@ -180,8 +180,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterRole('giver')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterRole === 'giver'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Pemberi
@@ -189,8 +189,8 @@ const HistoryPage = () => {
                 <button
                   onClick={() => setFilterRole('receiver')}
                   className={`px-3 py-1 rounded-md text-sm font-medium ${filterRole === 'receiver'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                     }`}
                 >
                   Penerima
