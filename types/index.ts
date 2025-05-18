@@ -104,6 +104,27 @@ export interface HistoryType {
   type: 'post' | 'request';
 }
 
+export interface MessageType {
+  _id: ObjectId;
+  id: string;
+  senderId: string | ObjectId | UserType;
+  receiverId: string | ObjectId | UserType;
+  content: string;
+  read: boolean;
+  createdAt: Date;
+}
+
+export interface ConversationType {
+  _id: ObjectId;
+  id: string;
+  participants: (string | ObjectId | UserType)[];
+  lastMessage: string;
+  lastMessageDate: Date;
+  unreadCount: Map<string, number>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Frontend form data types
 export interface LoginFormData {
   email: string;

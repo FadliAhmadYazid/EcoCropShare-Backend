@@ -76,14 +76,14 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
           setIsLoadingUsers(true);
           setSearchTerm('');
           setPartnerId('');
-          
+
           const response = await fetch('/api/users');
           const data = await response.json();
-  
+
           if (!response.ok) {
             throw new Error(data.message || 'Failed to fetch users');
           }
-  
+
           // Make sure we're getting the right format
           if (Array.isArray(data.users)) {
             setUsers(data.users);
@@ -99,7 +99,7 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
         }
       }
     };
-  
+
     fetchUsers();
   }, [showFulfilledModal]);
 
@@ -127,7 +127,7 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
 
   // Filter users, excluding current user
   const filteredUsers = users
-    .filter(user => user.id !== session?.user.id) // Exclude the current user
+    .filter(user => user.id !== session?.user?.id) // Exclude the current user
     .filter(user =>
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -463,7 +463,7 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
                 </div>
               )}
 
-              {/* Comment Form */}
+              {/* Comment Form - for both authors and non-authors */}
               {session && post.status === 'available' && (
                 <div>
                   <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
@@ -471,7 +471,7 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
                     <div className="mb-4">
                       <textarea
                         rows={3}
-                        placeholder={isAuthor ? "Tambahkan informasi..." : "Tulis jika Anda tertarik dengan tanaman ini..."}
+                        placeholder={isAuthor ? "Tambahkan informasi tambahan..." : "Tulis jika Anda tertarik dengan tanaman ini..."}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
@@ -566,18 +566,20 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
               <Card>
                 <h3 className="text-lg font-medium mb-4">Tertarik?</h3>
                 <p className="text-gray-700 mb-4">
-                  Silakan kirim komentar untuk menghubungi pemilik dan diskusikan lebih lanjut.
+                  Hubungi langsung pemilik untuk mendiskusikan lebih lanjut tentang tanaman ini.
                 </p>
                 <Button
                   isFullWidth
-                  onClick={() => {
-                    const textarea = document.querySelector('textarea');
-                    if (textarea) {
-                      textarea.focus();
-                    }
-                  }}
+                  onClick={() => router.push(`/messages?userId=${
+                    typeof post.userId === 'object'
+                      ? (post.userId as any)._id || (post.userId as any).id
+                      : post.userId
+                  }`)}
                 >
-                  Kirim Komentar
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                  </svg>
+                  Kirim Pesan
                 </Button>
               </Card>
             )}

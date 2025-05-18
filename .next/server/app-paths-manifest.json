@@ -1,4 +1,9 @@
 {
+  "/api/messages/unread-count/route": "app/api/messages/unread-count/route.js",
+  "/requests/page": "app/requests/page.js",
+  "/posts/page": "app/posts/page.js",
+  "/api/requests/route": "app/api/requests/route.js",
+  "/auth/page": "app/auth/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/dashboard/page": "app/dashboard/page.js"
 }
