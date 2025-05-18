@@ -12,11 +12,11 @@ import Card from '@/components/common/Card';
 import { getCategoryImage, formatTags } from '@/lib/utils';
 
 const articleCategories = [
-  { id: 'planting', name: 'Cara Menanam', icon: 'M6 13.5V6.75m0 0l-3-3m3 3h2.25A8.25 8.25 0 0118 12v0m-12.75 3.75h9.75m-9.75 0l-3 3m3-3v2.25a8.25 8.25 0 0118 0v-2.25' },
-  { id: 'fertilizer', name: 'Pupuk & Nutrisi', icon: 'M3.75 7.5l16.5-4.125M12 6.75c-2.708 0-5.363.224-7.948.655C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.8-2.169A48.329 48.329 0 0012 6.75zm-1.5 3.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zm6.75.75a.75.75 0 00-1.5 0v8.25a.75.75 0 001.5 0V11.25z' },
-  { id: 'pest', name: 'Hama & Penyakit', icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z' },
-  { id: 'harvest', name: 'Panen & Pascapanen', icon: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z' },
-  { id: 'other', name: 'Edukasi Lainnya', icon: 'M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5' }
+  { id: 'Cara Menanam', name: 'Cara Menanam', icon: 'M6 13.5V6.75m0 0l-3-3m3 3h2.25A8.25 8.25 0 0118 12v0m-12.75 3.75h9.75m-9.75 0l-3 3m3-3v2.25a8.25 8.25 0 0118 0v-2.25' },
+  { id: 'Pupuk & Nutrisi', name: 'Pupuk & Nutrisi', icon: 'M3.75 7.5l16.5-4.125M12 6.75c-2.708 0-5.363.224-7.948.655C2.999 7.58 2.25 8.507 2.25 9.574v9.176A2.25 2.25 0 004.5 21h15a2.25 2.25 0 002.25-2.25V9.574c0-1.067-.75-1.994-1.8-2.169A48.329 48.329 0 0012 6.75zm-1.5 3.75a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zm6.75.75a.75.75 0 00-1.5 0v8.25a.75.75 0 001.5 0V11.25z' },
+  { id: 'Hama & Penyakit', name: 'Hama & Penyakit', icon: 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z' },
+  { id: 'Panen & Pascapanen', name: 'Panen & Pascapanen', icon: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z' },
+  { id: 'Edukasi Lainnya', name: 'Edukasi Lainnya', icon: 'M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5' }
 ];
 
 interface EditArticlePageProps {
@@ -28,15 +28,15 @@ interface EditArticlePageProps {
 const getCategoryFromTitle = (title: string): string => {
   title = title.toLowerCase();
   if (title.includes('menanam') || title.includes('tanam') || title.includes('bibit')) {
-    return 'planting';
+    return 'menanam';
   } else if (title.includes('pupuk') || title.includes('kompos') || title.includes('nutrisi')) {
-    return 'fertilizer';
+    return 'pupuk';
   } else if (title.includes('hama') || title.includes('penyakit') || title.includes('serangga')) {
-    return 'pest';
+    return 'hama';
   } else if (title.includes('panen') || title.includes('simpan') || title.includes('hasil')) {
-    return 'harvest';
+    return 'panen';
   }
-  return 'other';
+  return 'lainnya';
 };
 
 const EditArticlePage = ({ params }: EditArticlePageProps) => {

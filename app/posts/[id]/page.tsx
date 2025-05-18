@@ -8,6 +8,7 @@ import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import AuthRequired from '@/components/auth/AuthRequired';
 import { PostType, CommentType, UserType } from '@/types';
 import { formatDate } from '@/lib/utils';
 
@@ -41,32 +42,28 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
 
   useEffect(() => {
     const fetchPostDetails = async () => {
-      if (status === 'authenticated') {
-        try {
-          setIsLoading(true);
+      try {
+        setIsLoading(true);
 
-          const response = await fetch(`/api/posts/${id}`);
-          const data = await response.json();
+        const response = await fetch(`/api/posts/${id}`);
+        const data = await response.json();
 
-          if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch post details');
-          }
-
-          setPost(data.post);
-          setComments(data.comments || []);
-        } catch (err: any) {
-          setError(err.message || 'Failed to load post details');
-          console.error('Error fetching post details:', err);
-        } finally {
-          setIsLoading(false);
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch post details');
         }
+
+        setPost(data.post);
+        setComments(data.comments || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load post details');
+        console.error('Error fetching post details:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (status !== 'loading' && id) {
-      fetchPostDetails();
-    }
-  }, [id, status]);
+    fetchPostDetails();
+  }, [id]);
 
   // Fetch users when the modal is opened
   useEffect(() => {
@@ -464,31 +461,33 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
               )}
 
               {/* Comment Form - for both authors and non-authors */}
-              {session && post.status === 'available' && (
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
-                  <form onSubmit={handleCommentSubmit}>
-                    <div className="mb-4">
-                      <textarea
-                        rows={3}
-                        placeholder={isAuthor ? "Tambahkan informasi tambahan..." : "Tulis jika Anda tertarik dengan tanaman ini..."}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        required
-                      ></textarea>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        type="submit"
-                        isLoading={isSubmitting}
-                        disabled={isSubmitting || !commentText.trim()}
-                      >
-                        Kirim Komentar
-                      </Button>
-                    </div>
-                  </form>
-                </div>
+              {post.status === 'available' && (
+                <AuthRequired message="Login untuk menambahkan komentar.">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
+                    <form onSubmit={handleCommentSubmit}>
+                      <div className="mb-4">
+                        <textarea
+                          rows={3}
+                          placeholder={isAuthor ? "Tambahkan informasi tambahan..." : "Tulis jika Anda tertarik dengan tanaman ini..."}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          required
+                        ></textarea>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          isLoading={isSubmitting}
+                          disabled={isSubmitting || !commentText.trim()}
+                        >
+                          Kirim Komentar
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </AuthRequired>
               )}
             </Card>
           </div>
@@ -568,19 +567,20 @@ const PostDetailPage = ({ params }: PostDetailPageProps) => {
                 <p className="text-gray-700 mb-4">
                   Hubungi langsung pemilik untuk mendiskusikan lebih lanjut tentang tanaman ini.
                 </p>
-                <Button
-                  isFullWidth
-                  onClick={() => router.push(`/messages?userId=${
-                    typeof post.userId === 'object'
-                      ? (post.userId as any)._id || (post.userId as any).id
-                      : post.userId
-                  }`)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                  </svg>
-                  Kirim Pesan
-                </Button>
+                <AuthRequired>
+                  <Button
+                    isFullWidth
+                    onClick={() => router.push(`/messages?userId=${typeof post.userId === 'object'
+                        ? (post.userId as any)._id || (post.userId as any).id
+                        : post.userId
+                      }`)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                    Kirim Pesan
+                  </Button>
+                </AuthRequired>
               </Card>
             )}
 

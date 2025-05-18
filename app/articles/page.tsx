@@ -8,6 +8,7 @@ import Footer from '@/components/common/Footer';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+import AuthRequired from '@/components/auth/AuthRequired';
 import { ArticleType } from '@/types';
 import { formatDate, getExcerpt } from '@/lib/utils';
 
@@ -15,64 +16,76 @@ const ArticlesPage = () => {
   const { data: session, status } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
   const [articles, setArticles] = useState<ArticleType[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchArticles = async () => {
-      if (status === 'authenticated') {
-        try {
-          setIsLoading(true);
-          
-          // Build query parameters
-          const params = new URLSearchParams();
-          if (selectedCategory) {
-            params.append('category', selectedCategory);
-          }
-          
-          const response = await fetch(`/api/articles?${params.toString()}`);
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch articles');
-          }
-          
-          setArticles(data.articles || []);
-        } catch (err: any) {
-          setError(err.message || 'Failed to load articles');
-          console.error('Error fetching articles:', err);
-        } finally {
-          setIsLoading(false);
+      try {
+        setIsLoading(true);
+
+        // Build query parameters for filtered articles
+        const params = new URLSearchParams();
+        if (selectedCategory) {
+          params.append('category', selectedCategory);
         }
+
+        // Fetch the filtered articles
+        const response = await fetch(`/api/articles?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch articles');
+        }
+
+        setArticles(data.articles || []);
+
+        // If we don't have all categories yet or we have a selected category,
+        // fetch all articles to get all available categories
+        if (allCategories.length === 0) {
+          const allArticlesResponse = await fetch('/api/articles');
+          const allArticlesData = await allArticlesResponse.json();
+
+          if (allArticlesResponse.ok) {
+            // Extract all unique categories
+            const categories = Array.from(
+              new Set(allArticlesData.articles
+                .filter((a: ArticleType) => a.category)
+                .map((a: ArticleType) => a.category as string))
+            );
+            setAllCategories(categories as string[]);
+          }
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to load articles');
+        console.error('Error fetching articles:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
+
     fetchArticles();
-  }, [status, selectedCategory]);
-  
-  // Get unique categories from articles
-  const categories = Array.from(
-    new Set(articles.filter(a => a.category).map(a => a.category))
-  );
-  
+  }, [selectedCategory, allCategories.length]);
+
   // Filter articles based on search term
   const filteredArticles = articles.filter((article) => {
     return (
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       article.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (article.tags && article.tags.some(tag => 
+      (article.tags && article.tags.some(tag =>
         tag.toLowerCase().includes(searchTerm.toLowerCase())
       ))
     );
   });
-  
+
   // Sort articles by creation date (newest first)
   const sortedArticles = [...filteredArticles].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-  
+
   if (status === 'loading' || isLoading) {
     return (
       <>
@@ -87,7 +100,7 @@ const ArticlesPage = () => {
       </>
     );
   }
-  
+
   return (
     <>
       <Header />
@@ -96,7 +109,7 @@ const ArticlesPage = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Artikel Edukasi</h1>
           <p className="text-gray-600 mb-6">Temukan artikel menarik tentang berbagai topik pendidikan</p>
-          
+
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="md:flex-1">
               <Input
@@ -112,60 +125,60 @@ const ArticlesPage = () => {
               />
             </div>
             <div>
-              <Link href="/articles/create">
-                <Button>
-                  Tulis Artikel
-                </Button>
-              </Link>
+              <AuthRequired>
+                <Link href="/articles/create">
+                  <Button>
+                    Tulis Artikel
+                  </Button>
+                </Link>
+              </AuthRequired>
             </div>
           </div>
         </div>
-        
+
         {/* Category Filters */}
-        {categories.length > 0 && (
+        {allCategories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                selectedCategory === null
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-              }`}
+              className={`px-3 py-1 rounded-md text-sm font-medium ${selectedCategory === null
+                ? 'bg-primary text-white'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
             >
               Semua Artikel
             </button>
-            
-            {categories.map((category) => (
+
+            {allCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  selectedCategory === category
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${selectedCategory === category
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
               >
                 {category}
               </button>
             ))}
           </div>
         )}
-        
+
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}
-        
+
         {/* Featured Article */}
         {sortedArticles.length > 0 && (
           <div className="mb-12">
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="md:flex">
                 <div className="md:flex-shrink-0 relative h-64 md:h-auto md:w-1/3">
-                  <img 
-                    src={sortedArticles[0].image || 'https://via.placeholder.com/1200x600?text=Artikel'} 
-                    alt={sortedArticles[0].title} 
+                  <img
+                    src={sortedArticles[0].image || 'https://via.placeholder.com/1200x600?text=Artikel'}
+                    alt={sortedArticles[0].title}
                     className="w-full h-full object-cover"
                   />
                   {sortedArticles[0].category && (
@@ -174,20 +187,20 @@ const ArticlesPage = () => {
                     </span>
                   )}
                 </div>
-                
+
                 <div className="p-6 md:p-8 md:flex-1">
                   <h2 className="text-2xl font-bold mb-2">{sortedArticles[0].title}</h2>
-                  
+
                   <div className="flex items-center text-sm text-gray-500 mb-4">
                     <span>{(sortedArticles[0].userId as any)?.name || 'Pengguna'}</span>
                     <span className="mx-2">•</span>
                     <span>{formatDate(sortedArticles[0].createdAt)}</span>
                   </div>
-                  
+
                   <p className="text-gray-600 mb-6">
                     {getExcerpt(sortedArticles[0].content, 180)}
                   </p>
-                  
+
                   <Link href={`/articles/${sortedArticles[0].id}`}>
                     <Button>
                       Baca Selengkapnya
@@ -198,7 +211,7 @@ const ArticlesPage = () => {
             </div>
           </div>
         )}
-        
+
         {/* Results count */}
         {sortedArticles.length > 0 && (
           <div className="flex justify-between items-center mb-6">
@@ -208,14 +221,14 @@ const ArticlesPage = () => {
             </div>
           </div>
         )}
-        
+
         {/* Articles Grid */}
         {sortedArticles.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Skip the first article if more than one (it's featured) */}
             {(sortedArticles.length > 1 ? sortedArticles.slice(1) : []).map((article) => (
-              <ArticleCard 
-                key={article.id} 
+              <ArticleCard
+                key={article.id}
                 article={article}
               />
             ))}
@@ -252,8 +265,8 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
       {article.image && (
         <Link href={`/articles/${article.id}`} className="block">
           <div className="relative h-48 w-full">
-            <img 
-              src={article.image || 'https://via.placeholder.com/400x300?text=Artikel'} 
+            <img
+              src={article.image || 'https://via.placeholder.com/400x300?text=Artikel'}
               alt={article.title}
               className="w-full h-full object-cover rounded-t-lg"
             />
@@ -265,7 +278,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           </div>
         </Link>
       )}
-      
+
       {/* Card Content */}
       <div className="p-5 flex-1 flex flex-col">
         <Link href={`/articles/${article.id}`} className="block mb-2">
@@ -273,7 +286,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             {article.title}
           </h3>
         </Link>
-        
+
         <div className="flex items-center mb-3 text-sm text-gray-500">
           <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs mr-2">
             {(article.userId as any)?.name?.charAt(0).toUpperCase() || 'U'}
@@ -284,11 +297,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             {formatDate(article.createdAt)}
           </span>
         </div>
-        
+
         <p className="text-gray-600 mb-4 line-clamp-3 text-sm flex-1">
           {getExcerpt(article.content, 120)}
         </p>
-        
+
         {/* Card Footer */}
         <div className="mt-auto pt-4 flex items-center justify-between">
           {article.tags && article.tags.length > 0 && (
@@ -305,7 +318,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
               )}
             </div>
           )}
-          
+
           <Link href={`/articles/${article.id}`}>
             <Button variant="outline" size="sm">
               <span>

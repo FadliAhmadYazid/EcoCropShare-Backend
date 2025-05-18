@@ -1,5 +1,16 @@
 {
   "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
+    ],
     "/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -10,11 +21,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/dashboard/layout.js"
     ],
-    "/layout": [
+    "/articles/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
+      "static/chunks/app/articles/page.js"
+    ],
+    "/articles/create/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/articles/create/page.js"
+    ],
+    "/articles/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/articles/[id]/page.js"
     ],
     "/posts/page": [
       "static/chunks/webpack.js",
@@ -26,20 +46,45 @@
       "static/chunks/main-app.js",
       "static/chunks/app/requests/page.js"
     ],
-    "/articles/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/articles/page.js"
-    ],
     "/history/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/history/page.js"
     ],
-    "/_not-found/page": [
+    "/messages/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/messages/page.js"
+    ],
+    "/posts/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/posts/[id]/page.js"
+    ],
+    "/requests/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/requests/[id]/page.js"
+    ],
+    "/messages/new/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/messages/new/page.js"
+    ],
+    "/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/profile/page.js"
+    ],
+    "/auth/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/page.js"
+    ],
+    "/history/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/history/[id]/page.js"
     ]
   }
 }

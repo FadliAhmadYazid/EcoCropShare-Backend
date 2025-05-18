@@ -1,3 +1,4 @@
+// File: app/api/requests/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -12,18 +13,10 @@ interface Params {
   };
 }
 
-// GET request by ID
+// GET request by ID - No authentication required
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
-    
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const { id } = params;
     
@@ -66,7 +59,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-// PUT update request
+// PUT update request - Authentication required
 export async function PUT(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
@@ -122,7 +115,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-// DELETE request
+// DELETE request - Authentication required
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     await connectDB();

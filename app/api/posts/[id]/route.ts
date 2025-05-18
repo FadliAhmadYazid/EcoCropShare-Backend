@@ -16,14 +16,6 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
     
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
     const post = await Post.findById(params.id)
       .populate('userId', 'name location profileImage favoritePlants');
     

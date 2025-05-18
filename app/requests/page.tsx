@@ -8,6 +8,7 @@ import Footer from '@/components/common/Footer';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import Card from '@/components/common/Card';
+import AuthRequired from '@/components/auth/AuthRequired';
 import { RequestType } from '@/types';
 import { formatDate } from '@/lib/utils';
 
@@ -15,58 +16,57 @@ const RequestsPage = () => {
   const { data: session, status } = useSession();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'open' | 'fulfilled'>('open');
-  
+
   const [requests, setRequests] = useState<RequestType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   useEffect(() => {
     const fetchRequests = async () => {
-      if (status === 'authenticated') {
-        try {
-          setIsLoading(true);
-          
-          // Build query parameters
-          const params = new URLSearchParams();
-          if (selectedStatus !== 'all') {
-            params.append('status', selectedStatus);
-          }
-          
-          const response = await fetch(`/api/requests?${params.toString()}`);
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch requests');
-          }
-          
-          setRequests(data.requests || []);
-        } catch (err: any) {
-          setError(err.message || 'Failed to load requests');
-          console.error('Error fetching requests:', err);
-        } finally {
-          setIsLoading(false);
+      try {
+        setIsLoading(true);
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (selectedStatus !== 'all') {
+          params.append('status', selectedStatus);
         }
+
+        const response = await fetch(`/api/requests?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch requests');
+        }
+
+        setRequests(data.requests || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load requests');
+        console.error('Error fetching requests:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
+
     fetchRequests();
-  }, [status, selectedStatus]);
-  
+  }, [selectedStatus]);
+
+
   // Filter requests client-side for search
   const filteredRequests = requests.filter((request) => {
-    const matchesSearch = 
+    const matchesSearch =
       request.plantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     return matchesSearch;
   });
-  
+
   // Sort requests by creation date (newest first)
   const sortedRequests = [...filteredRequests].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-  
+
   if (status === 'loading' || isLoading) {
     return (
       <>
@@ -81,7 +81,7 @@ const RequestsPage = () => {
       </>
     );
   }
-  
+
   return (
     <>
       <Header />
@@ -95,16 +95,18 @@ const RequestsPage = () => {
                   Lihat permintaan dari pengguna lain atau buat permintaan baru untuk tanaman yang Anda cari.
                 </p>
               </div>
-              
+
               <div>
-                <Link href="/requests/create">
-                  <Button variant="primary">
-                    Buat Permintaan
-                  </Button>
-                </Link>
+                <AuthRequired>
+                  <Link href="/requests/create">
+                    <Button variant="primary">
+                      Buat Permintaan
+                    </Button>
+                  </Link>
+                </AuthRequired>
               </div>
             </div>
-            
+
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
                 <Input
@@ -119,39 +121,36 @@ const RequestsPage = () => {
                   }
                 />
               </div>
-              
+
               <div>
                 <div className="flex items-center space-x-2">
                   <span className="whitespace-nowrap">Status:</span>
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setSelectedStatus('all')}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                        selectedStatus === 'all' 
-                          ? 'bg-primary text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${selectedStatus === 'all'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
                     >
                       Semua
                     </button>
                     <button
                       onClick={() => setSelectedStatus('open')}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center ${
-                        selectedStatus === 'open' 
-                          ? 'bg-primary text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center ${selectedStatus === 'open'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
                     >
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></div>
                       Aktif
                     </button>
                     <button
                       onClick={() => setSelectedStatus('fulfilled')}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center ${
-                        selectedStatus === 'fulfilled' 
-                          ? 'bg-primary text-white' 
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center ${selectedStatus === 'fulfilled'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
                     >
                       <div className="w-2 h-2 bg-gray-500 rounded-full mr-1.5"></div>
                       Terpenuhi
@@ -161,28 +160,28 @@ const RequestsPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between mb-6">
             <div className="text-sm text-gray-600">
               Menampilkan <span className="font-medium text-gray-900">{sortedRequests.length}</span> permintaan
             </div>
-            
+
             <div className="text-sm text-gray-600">
               Diurutkan dari terbaru
             </div>
           </div>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}
-        
+
         {sortedRequests.length > 0 ? (
           <div className="space-y-4">
             {sortedRequests.map((request) => (
-              <div 
+              <div
                 key={request.id}
                 className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
               >
@@ -196,19 +195,18 @@ const RequestsPage = () => {
                         {request.location}
                       </div>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      request.status === 'open' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${request.status === 'open'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {request.status === 'open' ? 'Aktif' : 'Terpenuhi'}
                     </span>
                   </div>
-                  
+
                   <div className="mb-4">
                     <p className="text-gray-700">{request.reason}</p>
                   </div>
-                  
+
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center mb-3 sm:mb-0">
                       <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium mr-2">
@@ -219,13 +217,13 @@ const RequestsPage = () => {
                         <span className="text-xs text-gray-500">{formatDate(request.createdAt)}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between sm:justify-end">
                       {/* Fixed this line by making it safe with optional chaining */}
                       <div className="text-sm text-gray-500 mr-4">
                         {request.comments?.length || 0} komentar
                       </div>
-                      
+
                       <Link href={`/requests/${request.id}`}>
                         <Button variant="outline" size="sm">
                           Lihat Detail

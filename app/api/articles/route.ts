@@ -1,27 +1,21 @@
+// File: app/api/articles/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Article from '@/models/Article';
 
-// GET all articles
+// GET all articles - No authentication required
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const url = new URL(req.url);
     const userId = url.searchParams.get('userId');
     const category = url.searchParams.get('category');
     const tag = url.searchParams.get('tag');
     const search = url.searchParams.get('search');
+    const limit = url.searchParams.get('limit');
     
     let query: any = {};
     
@@ -45,9 +39,15 @@ export async function GET(req: NextRequest) {
       ];
     }
     
-    const articles = await Article.find(query)
+    let articlesQuery = Article.find(query)
       .sort({ createdAt: -1 })
       .populate('userId', 'name profileImage');
+    
+    if (limit) {
+      articlesQuery = articlesQuery.limit(parseInt(limit));
+    }
+    
+    const articles = await articlesQuery;
     
     return NextResponse.json({ success: true, articles }, { status: 200 });
   } catch (error: any) {
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST new article
+// POST new article - Authentication required
 export async function POST(req: NextRequest) {
   try {
     await connectDB();

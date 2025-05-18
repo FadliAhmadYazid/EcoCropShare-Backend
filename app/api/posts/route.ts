@@ -1,3 +1,4 @@
+// File: app/api/posts/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -5,22 +6,15 @@ import connectDB from '@/lib/db';
 import Post from '@/models/Post';
 import Comment from '@/models/Comment';
 
-// GET all posts or user posts
+// GET all posts or user posts - No authentication required
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const url = new URL(req.url);
     const userId = url.searchParams.get('userId');
     const status = url.searchParams.get('status');
+    const limit = url.searchParams.get('limit');
 
     const query: any = {};
 
@@ -32,14 +26,19 @@ export async function GET(req: NextRequest) {
       query.status = status;
     }
 
-    const posts = await Post.find(query)
+    let postsQuery = Post.find(query)
       .sort({ createdAt: -1 })
       .populate('userId', 'name location profileImage');
+    
+    if (limit) {
+      postsQuery = postsQuery.limit(parseInt(limit));
+    }
 
-    // A simpler approach to add empty comments array to each post
+    const posts = await postsQuery;
+
+    // Add empty comments array to each post
     const postsWithComments = posts.map(post => {
       const postObj = post.toObject();
-      // Set a default empty array for comments
       postObj.comments = [];
       return postObj;
     });
@@ -80,7 +79,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST a new post
+// POST a new post - Authentication required
 export async function POST(req: NextRequest) {
   try {
     await connectDB();

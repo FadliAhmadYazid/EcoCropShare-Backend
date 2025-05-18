@@ -8,6 +8,7 @@ import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
+import AuthRequired from '@/components/auth/AuthRequired';
 import { RequestType, CommentType, UserType } from '@/types';
 import { formatDate, compareIds } from '@/lib/utils';
 
@@ -61,43 +62,35 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
   // First useEffect - Load request details
   useEffect(() => {
     const fetchRequestDetails = async () => {
-      if (status === 'authenticated') {
-        try {
-          setIsLoading(true);
+      try {
+        setIsLoading(true);
 
-          console.log(`Fetching request from: /api/requests/${id}`);
+        console.log(`Fetching request from: /api/requests/${id}`);
+        const response = await fetch(`/api/requests/${id}`);
+        console.log(`Response status: ${response.status}`);
+        const data = await response.json();
+        console.log('Response data:', data);
 
-          const response = await fetch(`/api/requests/${id}`);
-
-          console.log(`Response status: ${response.status}`);
-
-          const data = await response.json();
-
-          console.log('Response data:', data);
-
-          if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch request details');
-          }
-
-          if (!data.request) {
-            throw new Error('Request data is missing from response');
-          }
-
-          setRequest(data.request);
-          setComments(data.comments || []);
-        } catch (err: any) {
-          console.error('Error details:', err);
-          setError(err.message || 'Failed to load request details');
-        } finally {
-          setIsLoading(false);
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch request details');
         }
+
+        if (!data.request) {
+          throw new Error('Request data is missing from response');
+        }
+
+        setRequest(data.request);
+        setComments(data.comments || []);
+      } catch (err: any) {
+        console.error('Error details:', err);
+        setError(err.message || 'Failed to load request details');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (status !== 'loading') {
-      fetchRequestDetails();
-    }
-  }, [id, status]);
+    fetchRequestDetails();
+  }, [id]);
 
   // Second useEffect - Load users when modal opens
   useEffect(() => {
@@ -418,31 +411,33 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
               )}
 
               {/* Comment Form */}
-              {session && request.status === 'open' && (
-                <div className="p-6 pt-0">
-                  <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
-                  <form onSubmit={handleCommentSubmit}>
-                    <div className="mb-4">
-                      <textarea
-                        rows={3}
-                        placeholder={isAuthor ? "Tambahkan informasi..." : "Tulis jika Anda bisa membantu..."}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        required
-                      ></textarea>
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        type="submit"
-                        isLoading={isSubmitting}
-                        disabled={isSubmitting || !commentText.trim()}
-                      >
-                        Kirim Komentar
-                      </Button>
-                    </div>
-                  </form>
-                </div>
+              {request.status === 'open' && (
+                <AuthRequired message="Login untuk menambahkan komentar.">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
+                    <form onSubmit={handleCommentSubmit}>
+                      <div className="mb-4">
+                        <textarea
+                          rows={3}
+                          placeholder={isAuthor ? "Tambahkan informasi..." : "Tulis jika Anda bisa membantu..."}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          required
+                        ></textarea>
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          isLoading={isSubmitting}
+                          disabled={isSubmitting || !commentText.trim()}
+                        >
+                          Kirim Komentar
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </AuthRequired>
               )}
             </Card>
           </div>
@@ -523,18 +518,20 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                 <p className="text-gray-700 mb-4">
                   Jika Anda memiliki tanaman yang diminta, silakan hubungi langsung peminta.
                 </p>
-                <Button
-                  isFullWidth
-                  onClick={() => router.push(`/messages?userId=${typeof request.userId === 'object'
-                      ? (request.userId as any)._id || (request.userId as any).id
-                      : request.userId
-                    }`)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                  </svg>
-                  Kirim Pesan
-                </Button>
+                <AuthRequired>
+                  <Button
+                    isFullWidth
+                    onClick={() => router.push(`/messages?userId=${typeof request.userId === 'object'
+                        ? (request.userId as any)._id || (request.userId as any).id
+                        : request.userId
+                      }`)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                    Kirim Pesan
+                  </Button>
+                </AuthRequired>
               </div>
             )}
 

@@ -1,9 +1,11 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/posts/page": "app/posts/page.js",
-  "/api/messages/unread-count/route": "app/api/messages/unread-count/route.js",
-  "/history/page": "app/history/page.js",
+  "/messages/page": "app/messages/page.js",
+  "/messages/new/page": "app/messages/new/page.js",
+  "/auth/page": "app/auth/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/history/route": "app/api/history/route.js",
+  "/api/messages/unread-count/route": "app/api/messages/unread-count/route.js",
+  "/posts/page": "app/posts/page.js",
+  "/articles/page": "app/articles/page.js",
+  "/api/articles/route": "app/api/articles/route.js",
   "/dashboard/page": "app/dashboard/page.js"
 }

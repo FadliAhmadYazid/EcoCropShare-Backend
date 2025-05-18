@@ -1,25 +1,20 @@
+// File: app/api/requests/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/db';
 import Request from '@/models/Request';
+import Comment from '@/models/Comment';
 
-// GET all requests or user requests
+// GET all requests or user requests - No authentication required
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
     
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
     const url = new URL(req.url);
     const userId = url.searchParams.get('userId');
     const status = url.searchParams.get('status');
+    const limit = url.searchParams.get('limit');
     
     const query: any = {};
     
@@ -31,11 +26,33 @@ export async function GET(req: NextRequest) {
       query.status = status;
     }
     
-    const requests = await Request.find(query)
+    let requestsQuery = Request.find(query)
       .sort({ createdAt: -1 })
       .populate('userId', 'name location profileImage');
     
-    return NextResponse.json({ success: true, requests }, { status: 200 });
+    if (limit) {
+      requestsQuery = requestsQuery.limit(parseInt(limit));
+    }
+    
+    const requests = await requestsQuery;
+    
+    // Add comments count
+    const requestsWithComments = await Promise.all(
+      requests.map(async (request) => {
+        const requestObj = request.toObject();
+        
+        // Count comments for this request
+        const commentCount = await Comment.countDocuments({
+          parentId: request._id,
+          parentType: 'request'
+        });
+        
+        requestObj.comments = new Array(commentCount);
+        return requestObj;
+      })
+    );
+    
+    return NextResponse.json({ success: true, requests: requestsWithComments }, { status: 200 });
   } catch (error: any) {
     console.error('Error fetching requests:', error);
     return NextResponse.json(
@@ -45,7 +62,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST a new request
+// POST a new request - Authentication required
 export async function POST(req: NextRequest) {
   try {
     await connectDB();

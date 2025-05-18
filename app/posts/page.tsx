@@ -9,6 +9,7 @@ import Footer from '@/components/common/Footer';
 import Card from '@/components/common/Card';
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
+import AuthRequired from '@/components/auth/AuthRequired';
 import { PostType } from '@/types';
 
 const PostsPage = () => {
@@ -17,60 +18,58 @@ const PostsPage = () => {
   const [selectedType, setSelectedType] = useState<'all' | 'seed' | 'harvest'>('all');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'available' | 'completed'>('available');
   const [selectedExchangeType, setSelectedExchangeType] = useState<'all' | 'barter' | 'free'>('all');
-  
+
   const [posts, setPosts] = useState<PostType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   useEffect(() => {
     const fetchPosts = async () => {
-      if (status === 'authenticated') {
-        try {
-          setIsLoading(true);
-          
-          // Build query parameters
-          const params = new URLSearchParams();
-          if (selectedStatus !== 'all') {
-            params.append('status', selectedStatus);
-          }
-          
-          const response = await fetch(`/api/posts?${params.toString()}`);
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.message || 'Failed to fetch posts');
-          }
-          
-          setPosts(data.posts || []);
-        } catch (err: any) {
-          setError(err.message || 'Failed to load posts');
-          console.error('Error fetching posts:', err);
-        } finally {
-          setIsLoading(false);
+      try {
+        setIsLoading(true);
+
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (selectedStatus !== 'all') {
+          params.append('status', selectedStatus);
         }
+
+        const response = await fetch(`/api/posts?${params.toString()}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to fetch posts');
+        }
+
+        setPosts(data.posts || []);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load posts');
+        console.error('Error fetching posts:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
-    
+
     fetchPosts();
-  }, [status, selectedStatus]);
-  
+  }, [selectedStatus]);
+
   // Filter posts client-side for search and other filters
   const filteredPosts = posts.filter((post) => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesType = selectedType === 'all' || post.type === selectedType;
-    
+
     const matchesExchangeType = selectedExchangeType === 'all' || post.exchangeType === selectedExchangeType;
-    
+
     return matchesSearch && matchesType && matchesExchangeType;
   });
-  
+
   // Sort posts by creation date (newest first)
   const sortedPosts = [...filteredPosts].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
-  
+
   const formatDate = (date: Date | string): string => {
     return new Date(date).toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -78,7 +77,7 @@ const PostsPage = () => {
       year: 'numeric',
     });
   };
-  
+
   if (status === 'loading' || isLoading) {
     return (
       <>
@@ -93,14 +92,14 @@ const PostsPage = () => {
       </>
     );
   }
-  
+
   return (
     <>
       <Header />
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Temukan Bibit & Hasil Panen</h1>
-          
+
           <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
             <div className="flex-1">
               <Input
@@ -116,14 +115,16 @@ const PostsPage = () => {
               />
             </div>
             <div>
-              <Link href="/posts/create">
-                <Button>
-                  Tambah Post
-                </Button>
-              </Link>
+              <AuthRequired>
+                <Link href="/posts/create">
+                  <Button>
+                    Tambah Post
+                  </Button>
+                </Link>
+              </AuthRequired>
             </div>
           </div>
-          
+
           {/* Filters */}
           <div className="bg-white p-4 rounded-lg shadow-sm mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -133,37 +134,34 @@ const PostsPage = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedType('all')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedType === 'all' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedType === 'all'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Semua
                 </button>
                 <button
                   onClick={() => setSelectedType('seed')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedType === 'seed' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedType === 'seed'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Bibit
                 </button>
                 <button
                   onClick={() => setSelectedType('harvest')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedType === 'harvest' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedType === 'harvest'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Hasil Panen
                 </button>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-shrink-0">
                 <span className="font-medium text-gray-700">Status:</span>
@@ -171,37 +169,34 @@ const PostsPage = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedStatus('all')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedStatus === 'all' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedStatus === 'all'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Semua
                 </button>
                 <button
                   onClick={() => setSelectedStatus('available')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedStatus === 'available' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedStatus === 'available'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Tersedia
                 </button>
                 <button
                   onClick={() => setSelectedStatus('completed')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedStatus === 'completed' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedStatus === 'completed'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Selesai
                 </button>
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-shrink-0">
                 <span className="font-medium text-gray-700">Tipe Penukaran:</span>
@@ -209,38 +204,35 @@ const PostsPage = () => {
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSelectedExchangeType('all')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedExchangeType === 'all' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedExchangeType === 'all'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Semua
                 </button>
                 <button
                   onClick={() => setSelectedExchangeType('barter')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedExchangeType === 'barter' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedExchangeType === 'barter'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Barter
                 </button>
                 <button
                   onClick={() => setSelectedExchangeType('free')}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedExchangeType === 'free' 
-                      ? 'bg-primary text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${selectedExchangeType === 'free'
+                    ? 'bg-primary text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
                 >
                   Gratis
                 </button>
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-between items-center mb-6">
             <div className="text-sm text-gray-600">
               Menampilkan <span className="font-medium text-gray-900">{sortedPosts.length}</span> hasil
@@ -257,13 +249,13 @@ const PostsPage = () => {
             </div>
           </div>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
             {error}
           </div>
         )}
-        
+
         {sortedPosts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedPosts.map((post) => (
@@ -274,33 +266,30 @@ const PostsPage = () => {
                     alt={post.title}
                     className="h-full w-full object-cover rounded-t-lg"
                   />
-                  
+
                   <div className="absolute top-2 left-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      post.type === 'seed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.type === 'seed'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-yellow-100 text-yellow-800'
+                      }`}>
                       {post.type === 'seed' ? 'Bibit' : 'Hasil Panen'}
                     </span>
                   </div>
-                  
+
                   <div className="absolute top-2 right-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      post.status === 'available' 
-                        ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.status === 'available'
+                      ? 'bg-blue-100 text-blue-800'
+                      : 'bg-gray-100 text-gray-800'
+                      }`}>
                       {post.status === 'available' ? 'Tersedia' : 'Selesai'}
                     </span>
                   </div>
-                  
+
                   <div className="absolute bottom-2 right-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      post.exchangeType === 'barter' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-green-100 text-green-800'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.exchangeType === 'barter'
+                      ? 'bg-purple-100 text-purple-800'
+                      : 'bg-green-100 text-green-800'
+                      }`}>
                       {post.exchangeType === 'barter' ? 'Barter' : 'Gratis'}
                     </span>
                   </div>
@@ -311,7 +300,7 @@ const PostsPage = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex-1 p-4 pt-0 flex flex-col">
                   <div className="flex justify-between mb-2">
                     <h3 className="text-lg font-semibold line-clamp-1">{post.title}</h3>
@@ -324,7 +313,7 @@ const PostsPage = () => {
                   </div>
 
                   <p className="text-gray-600 mb-4 line-clamp-2 text-sm flex-1">{post.description}</p>
-                  
+
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center">
                       <div className="h-6 w-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-medium">
@@ -338,7 +327,7 @@ const PostsPage = () => {
                       {formatDate(post.createdAt)}
                     </div>
                   </div>
-                  
+
                   <Link href={`/posts/${post._id}`} className="mt-4">
                     <Button isFullWidth>
                       Lihat Detail

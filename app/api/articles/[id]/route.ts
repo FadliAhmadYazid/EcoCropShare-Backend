@@ -1,3 +1,4 @@
+// File: app/api/articles/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -10,18 +11,10 @@ interface Params {
   };
 }
 
-// GET article by ID
+// GET article by ID - No authentication required
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
-    
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
     
     const article = await Article.findById(params.id)
       .populate('userId', 'name profileImage location favoritePlants');
@@ -63,7 +56,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-// PUT update article
+// PUT update article - Authentication required
 export async function PUT(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
@@ -125,7 +118,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 }
 
-// DELETE article
+// DELETE article - Authentication required
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
     await connectDB();
