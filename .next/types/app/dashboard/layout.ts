@@ -1,4 +1,4 @@
-// File: D:\Semester 6\ppl\mk\apa nih\EcoCropShare - Backend\app\dashboard\layout.tsx
+// File: C:\SEMESTER 6\PPL\Final Project\EcoCropShare-Backend\app\dashboard\layout.tsx
 import * as entry from '../../../../app/dashboard/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

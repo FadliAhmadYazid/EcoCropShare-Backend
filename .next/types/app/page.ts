@@ -1,4 +1,4 @@
-// File: D:\Semester 6\ppl\mk\apa nih\EcoCropShare - Backend\app\page.tsx
+// File: C:\SEMESTER 6\PPL\Final Project\EcoCropShare-Backend\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
