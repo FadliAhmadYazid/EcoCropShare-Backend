@@ -1,9 +1,11 @@
 {
-  "/page": "app/page.js",
-  "/api/posts/route": "app/api/posts/route.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/api/messages/unread-count/route": "app/api/messages/unread-count/route.js",
-  "/api/requests/route": "app/api/requests/route.js",
-  "/api/articles/route": "app/api/articles/route.js",
+  "/articles/page": "app/articles/page.js",
+  "/history/page": "app/history/page.js",
+  "/history/[id]/page": "app/history/[id]/page.js",
+  "/messages/page": "app/messages/page.js",
+  "/api/messages/route": "app/api/messages/route.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/api/users/[id]/route": "app/api/users/[id]/route.js",
   "/dashboard/page": "app/dashboard/page.js"
 }

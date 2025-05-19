@@ -107,16 +107,42 @@ const EditPostPage = ({ params }: EditPostPageProps) => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
 
     if (files && files.length > 0) {
-      // In a real implementation, we would upload the file to a storage service
-      // For now, we'll just use placeholder images
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, 'https://images.unsplash.com/photo-1605000797499-95a51c5269ae?q=80&w=1000'],
-      }));
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', files[0]);
+        formData.append('type', 'post'); // Specify that this is a post image
+
+        // Show loading state for upload
+        setIsSubmitting(true);
+
+        // Upload the file to Cloudinary
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Error uploading image');
+        }
+
+        // Add the new image URL to the form data
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, data.imageUrl],
+        }));
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        setSubmitError(error.message || 'Failed to upload image. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -226,8 +252,8 @@ const EditPostPage = ({ params }: EditPostPageProps) => {
             {/* Status Badge */}
             <div className="mb-6 flex justify-end">
               <div className={`px-3 py-1 rounded-full text-sm font-medium ${formData.status === 'available'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-gray-100 text-gray-800'
+                ? 'bg-blue-100 text-blue-800'
+                : 'bg-gray-100 text-gray-800'
                 }`}>
                 {formData.status === 'available' ? 'Tersedia' : 'Selesai'}
               </div>
@@ -240,8 +266,8 @@ const EditPostPage = ({ params }: EditPostPageProps) => {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className={`flex items-center p-4 border rounded-lg cursor-pointer ${formData.type === 'seed'
-                    ? 'border-primary bg-primary bg-opacity-5'
-                    : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-primary bg-primary bg-opacity-5'
+                  : 'border-gray-200 hover:border-gray-300'
                   }`}>
                   <input
                     type="radio"
@@ -258,8 +284,8 @@ const EditPostPage = ({ params }: EditPostPageProps) => {
                 </label>
 
                 <label className={`flex items-center p-4 border rounded-lg cursor-pointer ${formData.type === 'harvest'
-                    ? 'border-primary bg-primary bg-opacity-5'
-                    : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-primary bg-primary bg-opacity-5'
+                  : 'border-gray-200 hover:border-gray-300'
                   }`}>
                   <input
                     type="radio"

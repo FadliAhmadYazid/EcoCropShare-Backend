@@ -8,8 +8,21 @@ import Header from '@/components/common/Header';
 import Footer from '@/components/common/Footer';
 import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
-import { HistoryType, PartialUserType } from '@/types';
+import { HistoryType } from '@/types';
 import { formatDate } from '@/lib/utils';
+
+// Define the missing PartialUserType directly in the file for now
+// Later you should move this to your types file
+interface PartialUserType {
+  _id?: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  location?: string;
+  profileImage?: string;
+  favoritePlants?: string[];
+  createdAt?: Date;
+}
 
 interface HistoryDetailPageProps {
   params: {
@@ -87,11 +100,9 @@ const HistoryDetailPage = ({ params }: HistoryDetailPageProps) => {
           
           // Set giver and receiver - safely compare user IDs
           const userId = data.history.userId;
-          const userIdString = typeof userId === 'object' && userId._id 
-            ? userId._id.toString()
-            : typeof userId === 'object' && userId.id
-              ? userId.id.toString()
-              : userId.toString();
+          const userIdString = typeof userId === 'object' 
+            ? (userId as any)._id?.toString() || (userId as any).id?.toString() || userId.toString()
+            : userId.toString();
               
           if (userIdString === session.user.id) {
             setGiver(convertSessionUserToUserType(session.user));
@@ -157,11 +168,11 @@ const HistoryDetailPage = ({ params }: HistoryDetailPageProps) => {
   // Check if current user is the giver by comparing IDs safely
   const isUserGiver = session?.user?.id === (
     // If userId is an object with _id
-    typeof history.userId === 'object' && history.userId._id 
-      ? history.userId._id.toString()
+    typeof history.userId === 'object' && (history.userId as any)._id 
+      ? (history.userId as any)._id.toString()
       // If userId is an object with id
-      : typeof history.userId === 'object' && history.userId.id
-        ? history.userId.id.toString()
+      : typeof history.userId === 'object' && (history.userId as any).id
+        ? (history.userId as any).id.toString()
         // If userId is a string
         : history.userId.toString()
   );
@@ -341,10 +352,18 @@ const HistoryDetailPage = ({ params }: HistoryDetailPageProps) => {
               </Link>
             )}
             
-            {/* Message User - in a real app, this would link to messaging */}
+            {/* Message User */}
             <Button
               onClick={() => {
-                alert('Fitur pesan belum tersedia');
+                const targetUserId = isUserGiver
+                  ? (typeof history.partnerId === 'object' 
+                    ? (history.partnerId as any)._id || (history.partnerId as any).id 
+                    : history.partnerId)
+                  : (typeof history.userId === 'object'
+                    ? (history.userId as any)._id || (history.userId as any).id
+                    : history.userId);
+                
+                router.push(`/messages?userId=${targetUserId}`);
               }}
             >
               {isUserGiver ? 'Kirim Pesan ke Penerima' : 'Kirim Pesan ke Pemberi'}

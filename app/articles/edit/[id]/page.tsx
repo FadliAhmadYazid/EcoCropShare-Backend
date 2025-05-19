@@ -134,15 +134,40 @@ const EditArticlePage = ({ params }: EditArticlePageProps) => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
-      // In a real implementation, we would upload the file to a storage service
-      // For now, we'll just use a placeholder URL
-      const imageUrl = getCategoryImage(formData.categoryId);
-      setFormData(prev => ({ ...prev, featuredImage: imageUrl }));
-      setPreviewImage(imageUrl);
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'article'); // Specify that this is an article image
+
+        // Show loading state
+        setIsSubmitting(true);
+
+        // Upload the file to Cloudinary
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Error uploading image');
+        }
+
+        // Set the uploaded image URL
+        setFormData(prev => ({ ...prev, featuredImage: data.imageUrl }));
+        setPreviewImage(data.imageUrl);
+      } catch (error: any) {
+        console.error('Upload error:', error);
+        setSubmitError(error.message || 'Failed to upload image. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

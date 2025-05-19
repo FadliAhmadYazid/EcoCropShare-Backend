@@ -27,7 +27,7 @@ const CreateArticlePage = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    categoryId: 'planting',
+    categoryId: 'Cara Menanam',
     featuredImage: '',
     tags: '',
   });

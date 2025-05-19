@@ -36,6 +36,18 @@ export interface UserType {
   createdAt: Date;
 }
 
+// Di file types/index.ts
+export interface PartialUserType {
+  _id?: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  location?: string;
+  profileImage?: string;
+  favoritePlants?: string[];
+  createdAt?: Date;
+}
+
 export interface PostType {
   _id: ObjectId;
   id: string;

@@ -68,11 +68,6 @@ const MessagesPage = () => {
         }
     }, [userId, status]);
 
-    // Scroll to bottom when messages change
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
-
     // Set up polling for new messages
     useEffect(() => {
         if (status === 'authenticated') {
@@ -227,6 +222,7 @@ const MessagesPage = () => {
         }
     };
 
+    // Keep this function for manual scrolling if needed
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
@@ -479,6 +475,21 @@ const MessagesPage = () => {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Optional manual scroll button */}
+                                    {messages.length > 10 && (
+                                        <div className="absolute bottom-20 right-8">
+                                            <button
+                                                onClick={scrollToBottom}
+                                                className="bg-primary text-white rounded-full p-2 shadow-md hover:bg-primary-dark transition-colors"
+                                                title="Scroll ke pesan terbaru"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* Message Input */}
                                     <div className="p-4 border-t">

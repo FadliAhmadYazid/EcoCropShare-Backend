@@ -55,9 +55,9 @@ const RequestsPage = () => {
   // Filter requests client-side for search
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
-      request.plantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.location.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.plantName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.reason?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.location?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
     return matchesSearch;
   });
@@ -182,7 +182,7 @@ const RequestsPage = () => {
           <div className="space-y-4">
             {sortedRequests.map((request) => (
               <div
-                key={request.id}
+                key={String(request.id || request._id)}
                 className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-shadow"
               >
                 <div className="p-6">
@@ -219,12 +219,11 @@ const RequestsPage = () => {
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end">
-                      {/* Fixed this line by making it safe with optional chaining */}
                       <div className="text-sm text-gray-500 mr-4">
                         {request.comments?.length || 0} komentar
                       </div>
 
-                      <Link href={`/requests/${request.id}`}>
+                      <Link href={`/requests/${request._id || request.id}`}>
                         <Button variant="outline" size="sm">
                           Lihat Detail
                         </Button>

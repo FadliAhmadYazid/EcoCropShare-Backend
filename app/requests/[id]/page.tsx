@@ -10,7 +10,7 @@ import Button from '@/components/common/Button';
 import Card from '@/components/common/Card';
 import AuthRequired from '@/components/auth/AuthRequired';
 import { RequestType, CommentType, UserType } from '@/types';
-import { formatDate, compareIds } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 interface RequestDetailPageProps {
   params: {
@@ -38,26 +38,6 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-
-  // Add this before the return statement
-  const filteredUsers = users
-    .filter(user => user.id !== session?.user.id) // Exclude the current user
-    .filter(user =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-  // Also add a click handler to close the dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowDropdown(false);
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
 
   // First useEffect - Load request details
   useEffect(() => {
@@ -98,21 +78,26 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
       if (showFulfilledModal) {
         try {
           setIsLoadingUsers(true);
-          console.log('Fetching users...');
+          setSearchTerm('');
+          setPartnerId('');
+          
           const response = await fetch('/api/users');
-
-          console.log('User response status:', response.status);
           const data = await response.json();
-          console.log('User data:', data);
 
           if (!response.ok) {
-            throw new Error('Failed to fetch users');
+            throw new Error(data.message || 'Failed to fetch users');
           }
 
-          setUsers(data.users || []);
-          console.log('Set users:', data.users);
+          // Make sure we're getting the right format
+          if (Array.isArray(data.users)) {
+            setUsers(data.users);
+          } else {
+            console.error('Expected users array but got:', data);
+            setUsers([]);
+          }
         } catch (err: any) {
           console.error('Error fetching users:', err);
+          alert('Gagal memuat daftar pengguna: ' + (err.message || 'Terjadi kesalahan'));
         } finally {
           setIsLoadingUsers(false);
         }
@@ -121,6 +106,36 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
 
     fetchUsers();
   }, [showFulfilledModal]);
+
+  // Add click handler to close the dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdown = document.getElementById('user-dropdown');
+      const searchInput = document.getElementById('user-search');
+
+      if (
+        dropdown &&
+        searchInput &&
+        !dropdown.contains(event.target as Node) &&
+        !searchInput.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Filter users, excluding current user
+  const filteredUsers = users
+    .filter(user => user.id !== session?.user?.id) // Exclude the current user
+    .filter(user =>
+      (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (user.name?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,8 +175,12 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
     }
   };
 
-  // Fix isAuthor check with proper ID comparison
-  const isAuthor = session && request ? compareIds(session.user.id, request.userId) : false;
+  // Improved isAuthor check that handles multiple ID formats
+  const isAuthor = session && request ? (
+    session.user.id === request.userId?.toString() ||
+    session.user.id === (request.userId as any)?._id?.toString() ||
+    session.user.id === (request.userId as any)?.id
+  ) : false;
 
   const handleDeleteComment = async (commentId: string) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus komentar ini?')) {
@@ -217,7 +236,7 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
         },
         body: JSON.stringify({
           requestId: id,
-          partnerId: partnerId, // Use the user ID, not name
+          partnerId: partnerId, // Now using user ID
           plantName: request?.plantName || '',
           notes: notes,
           type: 'request',
@@ -389,7 +408,9 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                           </div>
                           <p className="text-gray-700">{comment.content}</p>
 
-                          {session?.user?.id === (comment.userId as any)?._id && (
+                          {/* Improved comment ownership check */}
+                          {session?.user?.id === (comment.userId as any)?._id?.toString() ||
+                           session?.user?.id === (comment.userId as any)?.id ? (
                             <div className="mt-2 flex justify-end">
                               <button
                                 onClick={() => handleDeleteComment(comment.id)}
@@ -398,7 +419,7 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                                 Hapus
                               </button>
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </div>
                     </div>
@@ -412,32 +433,34 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
 
               {/* Comment Form */}
               {request.status === 'open' && (
-                <AuthRequired message="Login untuk menambahkan komentar.">
-                  <div>
-                    <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
-                    <form onSubmit={handleCommentSubmit}>
-                      <div className="mb-4">
-                        <textarea
-                          rows={3}
-                          placeholder={isAuthor ? "Tambahkan informasi..." : "Tulis jika Anda bisa membantu..."}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                          required
-                        ></textarea>
-                      </div>
-                      <div className="flex justify-end">
-                        <Button
-                          type="submit"
-                          isLoading={isSubmitting}
-                          disabled={isSubmitting || !commentText.trim()}
-                        >
-                          Kirim Komentar
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                </AuthRequired>
+                <div className="p-6">
+                  <AuthRequired message="Login untuk menambahkan komentar.">
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Tambah Komentar</h3>
+                      <form onSubmit={handleCommentSubmit}>
+                        <div className="mb-4">
+                          <textarea
+                            rows={3}
+                            placeholder={isAuthor ? "Tambahkan informasi..." : "Tulis jika Anda bisa membantu..."}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            required
+                          ></textarea>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            type="submit"
+                            isLoading={isSubmitting}
+                            disabled={isSubmitting || !commentText.trim()}
+                          >
+                            Kirim Komentar
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  </AuthRequired>
+                </div>
               )}
             </Card>
           </div>
@@ -483,71 +506,77 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
 
             {/* Bagian Kelola Permintaan (hanya untuk pemilik) */}
             {isAuthor && request && request.status === 'open' && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h3 className="text-lg font-medium mb-4">Kelola Permintaan</h3>
-                <div className="space-y-3">
-                  <Link href={`/requests/edit/${request.id}`}>
-                    <Button variant="outline" isFullWidth>
-                      Edit Permintaan
+              <Card className="mb-6">
+                <div className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Kelola Permintaan</h3>
+                  <div className="space-y-3">
+                    <Link href={`/requests/edit/${request.id}`} className="block w-full">
+                      <Button variant="outline" isFullWidth>
+                        Edit Permintaan
+                      </Button>
+                    </Link>
+
+                    <Button
+                      variant="primary"
+                      isFullWidth
+                      onClick={() => setShowFulfilledModal(true)}
+                    >
+                      Tandai Terpenuhi
                     </Button>
-                  </Link>
 
-                  <Button
-                    variant="primary"
-                    isFullWidth
-                    onClick={() => setShowFulfilledModal(true)}
-                  >
-                    Tandai Terpenuhi
-                  </Button>
-
-                  <Button
-                    variant="danger"
-                    isFullWidth
-                    onClick={handleDeleteRequest}
-                  >
-                    Hapus Permintaan
-                  </Button>
+                    <Button
+                      variant="danger"
+                      isFullWidth
+                      onClick={handleDeleteRequest}
+                    >
+                      Hapus Permintaan
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* Bagian Tawarkan Bantuan (hanya untuk non-pemilik) */}
             {!isAuthor && request.status === 'open' && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h3 className="text-lg font-medium mb-4">Bisa Membantu?</h3>
-                <p className="text-gray-700 mb-4">
-                  Jika Anda memiliki tanaman yang diminta, silakan hubungi langsung peminta.
-                </p>
-                <AuthRequired>
-                  <Button
-                    isFullWidth
-                    onClick={() => router.push(`/messages?userId=${typeof request.userId === 'object'
-                        ? (request.userId as any)._id || (request.userId as any).id
-                        : request.userId
-                      }`)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                    </svg>
-                    Kirim Pesan
-                  </Button>
-                </AuthRequired>
-              </div>
+              <Card>
+                <div className="p-6">
+                  <h3 className="text-lg font-medium mb-4">Bisa Membantu?</h3>
+                  <p className="text-gray-700 mb-4">
+                    Jika Anda memiliki tanaman yang diminta, silakan hubungi langsung peminta.
+                  </p>
+                  <AuthRequired>
+                    <Button
+                      isFullWidth
+                      onClick={() => router.push(`/messages?userId=${typeof request.userId === 'object'
+                          ? (request.userId as any)._id || (request.userId as any).id
+                          : request.userId
+                        }`)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                      </svg>
+                      Kirim Pesan
+                    </Button>
+                  </AuthRequired>
+                </div>
+              </Card>
             )}
 
             {/* Bagian Permintaan Terpenuhi (jika status fulfilled) */}
             {request.status === 'fulfilled' && (
-              <div className="bg-green-50 rounded-lg shadow-sm p-6 mb-6">
-                <div className="flex items-center mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-green-800">Permintaan Terpenuhi</h3>
+              <Card className="bg-green-50">
+                <div className="p-6">
+                  <div className="flex items-center mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <h3 className="text-lg font-medium text-green-800">Permintaan Terpenuhi</h3>
+                  </div>
+                  <p className="text-green-700">
+                    Permintaan ini sudah terpenuhi dan tidak aktif lagi.
+                  </p>
                 </div>
-                <p className="text-green-700">
-                  Permintaan ini sudah terpenuhi dan tidak aktif lagi.
-                </p>
-              </div>
+              </Card>
             )}
           </div>
         </div>
@@ -572,6 +601,7 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                     ) : (
                       <div className="relative">
                         <input
+                          id="user-search"
                           type="text"
                           placeholder="Cari berdasarkan email atau nama..."
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -581,16 +611,21 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                             setShowDropdown(true);
                           }}
                           onFocus={() => setShowDropdown(true)}
+                          onClick={(e) => e.stopPropagation()}
                         />
 
                         {showDropdown && (
-                          <div className="absolute w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                          <div
+                            id="user-dropdown"
+                            className="absolute w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto"
+                          >
                             {filteredUsers.length > 0 ? (
                               filteredUsers.map(user => (
                                 <div
                                   key={user.id}
                                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setPartnerId(user.id);
                                     setSearchTerm(`${user.name} (${user.email})`);
                                     setShowDropdown(false);
@@ -601,7 +636,11 @@ const RequestDetailPage = ({ params }: RequestDetailPageProps) => {
                                 </div>
                               ))
                             ) : (
-                              <div className="px-4 py-2 text-gray-500">Tidak ada pengguna yang cocok</div>
+                              <div className="px-4 py-2 text-gray-500">
+                                {searchTerm.length > 0
+                                  ? 'Tidak ada pengguna yang cocok'
+                                  : 'Ketik untuk mencari pengguna'}
+                              </div>
                             )}
                           </div>
                         )}
