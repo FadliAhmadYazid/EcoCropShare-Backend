@@ -1,4 +1,4 @@
-// File: C:\SEMESTER 6\PPL\Final Project\EcoCropShare-Backend\app\api\auth\[...nextauth]\route.ts
+// File: D:\Semester 6\ppl\mk\apa nih\EcoCropShare - Backend\app\api\auth\[...nextauth]\route.ts
 import * as entry from '../../../../../../app/api/auth/[...nextauth]/route.js'
 import type { NextRequest } from 'next/server.js'
 
