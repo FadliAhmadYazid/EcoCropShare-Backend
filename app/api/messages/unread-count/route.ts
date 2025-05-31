@@ -5,6 +5,9 @@ import connectDB from '@/lib/db';
 import Message from '@/models/Message';
 import Conversation from '@/models/Conversation';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // GET unread messages count for current user
 export async function GET(req: NextRequest) {
   try {
