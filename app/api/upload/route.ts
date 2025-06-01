@@ -1,3 +1,4 @@
+// app/api/upload/route.ts - Fixed version without deprecated config
 import { NextResponse, NextRequest } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import { getServerSession } from 'next-auth/next';
@@ -21,15 +22,15 @@ function validateCloudinaryConfig() {
 }
 
 function validateFile(file: File) {
-  const maxSize = 3 * 1024 * 1024; // Reduce to 3MB for Vercel
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const maxSize = 4 * 1024 * 1024; // 4MB
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   
   if (file.size > maxSize) {
-    throw new Error('File size too large. Maximum 3MB allowed.');
+    throw new Error('File size too large. Maximum 4MB allowed.');
   }
   
   if (!allowedTypes.includes(file.type)) {
-    throw new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
+    throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
   }
 }
 
@@ -89,20 +90,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Convert file to buffer with shorter timeout for Vercel
+    // 5. Convert file to buffer
     let buffer: ArrayBuffer;
     try {
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('File processing timeout')), 5000) // Reduced to 5s
-      );
-      
-      buffer = await Promise.race([
-        file.arrayBuffer(),
-        timeoutPromise
-      ]) as ArrayBuffer;
-      
+      buffer = await file.arrayBuffer();
       console.log('File buffer created, size:', buffer.byteLength);
-      
     } catch (error) {
       console.error('File buffer error:', error);
       return NextResponse.json(
@@ -132,52 +124,31 @@ export async function POST(req: NextRequest) {
       overwrite: uploadType === 'profile',
       resource_type: 'image' as const,
       transformation: [
-        { quality: 'auto:low' }, // Lower quality for faster upload
-        { fetch_format: 'auto' },
-        { width: 1200, height: 1200, crop: 'limit' } // Limit size
+        { quality: 'auto:good' },
+        { fetch_format: 'auto' }
       ]
     };
 
     console.log('Starting Cloudinary upload with options:', uploadOptions);
 
-    // 7. Upload to Cloudinary with shorter timeout
+    // 7. Upload to Cloudinary
     let result;
     try {
-      result = await new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
-          reject(new Error('Cloudinary upload timeout'));
-        }, 10000); // 10 seconds for Vercel
-        
-        cloudinary.uploader.upload(
-          dataURI,
-          uploadOptions,
-          (error, uploadResult) => {
-            clearTimeout(timeoutId);
-            if (error) {
-              console.error('Cloudinary upload error:', error);
-              reject(new Error(`Upload failed: ${error.message}`));
-            } else if (!uploadResult) {
-              reject(new Error('Upload failed: No result from Cloudinary'));
-            } else {
-              console.log('Cloudinary upload successful:', uploadResult.secure_url);
-              resolve(uploadResult);
-            }
-          }
-        );
-      });
+      result = await cloudinary.uploader.upload(dataURI, uploadOptions);
+      console.log('Cloudinary upload successful:', result.secure_url);
     } catch (error: any) {
       console.error('Cloudinary upload error:', error);
       return NextResponse.json(
         { 
           success: false, 
-          message: error.message || 'Failed to upload image to cloud storage' 
+          message: `Upload failed: ${error.message}` 
         },
         { status: 500 }
       );
     }
 
     // 8. Validate result
-    const imageUrl = (result as any)?.secure_url;
+    const imageUrl = result?.secure_url;
     if (!imageUrl) {
       console.error('No image URL in result:', result);
       return NextResponse.json(
@@ -192,13 +163,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       imageUrl: imageUrl,
-      publicId: (result as any).public_id
+      publicId: result.public_id
     });
 
   } catch (error: any) {
     console.error('Upload API error:', error);
     
-    // Ensure we always return valid JSON
     return NextResponse.json(
       { 
         success: false, 
@@ -210,11 +180,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Vercel-specific configuration
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '3mb', // Reduced for Vercel
-    },
-  },
-};
+// Route segment config (New App Router way)
+export const runtime = 'nodejs';
+export const maxDuration = 30;
