@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "app/api/upload/route.ts": {
+      "maxDuration": 15
+    },
+    "app/api/posts/route.ts": {
+      "maxDuration": 15
+    }
+  },
+  "regions": ["sin1"]
+}
