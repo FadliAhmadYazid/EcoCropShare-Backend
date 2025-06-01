@@ -1,4 +1,4 @@
-// app/api/posts/route.ts - Fixed version (hanya untuk CRUD posts, bukan upload)
+// app/api/posts/route.ts - Fixed version dengan filter status
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
@@ -15,10 +15,12 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const type = searchParams.get('type');
     const location = searchParams.get('location');
+    const status = searchParams.get('status'); // TAMBAHAN: Handle parameter status
     
     const query: any = {};
     if (type) query.type = type;
     if (location) query.location = { $regex: location, $options: 'i' };
+    if (status && status !== 'all') query.status = status; // TAMBAHAN: Filter berdasarkan status
     
     const skip = (page - 1) * limit;
     
@@ -29,6 +31,11 @@ export async function GET(req: NextRequest) {
       .limit(limit);
     
     const total = await Post.countDocuments(query);
+    
+    // TAMBAHAN: Debug logging
+    console.log('Query parameters:', { type, location, status });
+    console.log('MongoDB query:', query);
+    console.log('Found posts:', posts.length);
     
     return NextResponse.json({
       success: true,
@@ -73,7 +80,7 @@ export async function POST(req: NextRequest) {
       location,
       images,
       description,
-      status: 'available'
+      status: 'available' // Default status saat membuat post baru
     });
     
     await newPost.save();
